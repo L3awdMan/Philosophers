@@ -6,7 +6,7 @@
 /*   By: zotaj-di <marvin@42.fr>                    +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/03/18 18:01:26 by zotaj-di          #+#    #+#             */
-/*   Updated: 2026/03/18 18:45:24 by zotaj-di         ###   ########.fr       */
+/*   Updated: 2026/03/18 23:43:57 by zotaj-di         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -37,7 +37,7 @@
 
 int	check_ac(int ac)
 {
-	if (ac != 5 && av != 6)
+	if (ac != 5 && ac != 6)
 	{
 		ft_error("Usage: philo num_philos t_die t_eat t_sleep [meals]");
 		return (0);
