@@ -1,4 +1,4 @@
-# philo — 42 Dining Philosophers
+# 42 Dining Philosophers
 
 N philosophers sit at a round table.
 Each needs two forks to eat. Each fork is shared with a neighbor.

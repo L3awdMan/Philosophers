@@ -6,7 +6,7 @@
 /*   By: zotaj-di <marvin@42.fr>                    +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/03/18 00:14:20 by zotaj-di          #+#    #+#             */
-/*   Updated: 2026/03/18 23:44:55 by zotaj-di         ###   ########.fr       */
+/*   Updated: 2026/03/18 23:57:33 by zotaj-di         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -68,7 +68,7 @@ typedef struct s_philo
 }						t_philo;
 
 /* Error utils function */
-const char				*ft_strlen(char *str);
+int						ft_strlen(char *str);
 int						ft_error(char *str);
 
 /* Main function */
