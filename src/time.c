@@ -6,7 +6,7 @@
 /*   By: zotaj-di <marvin@42.fr>                    +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/03/18 23:53:02 by zotaj-di          #+#    #+#             */
-/*   Updated: 2026/03/19 00:06:22 by zotaj-di         ###   ########.fr       */
+/*   Updated: 2026/03/19 15:33:22 by zotaj-di         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -28,6 +28,28 @@
 //    1. Call gettimeofday(&tv, NULL)
 //    2. Convert: (seconds * 1000) + (microseconds / 1000)
 //    3. Return result
+
+//======================== FUNCTION: time_since ========================
+//
+// PURPOSE:
+//    Returns ms elapsed since a given start timestamp.
+//    Wraps get_time_ms subtraction with underflow protection.
+//
+// RETURN:
+//    uint64_t — ms elapsed, or 0 if clock skew detected
+//
+// PARAMETERS:
+//    uint64_t start — reference timestamp in ms
+//
+// ALGORITHM:
+//    1. Get current time via get_time_ms
+//    2. If now >= start → return now - start
+//    3. Else → return 0 (protect against unsigned wraparound)
+//
+// EDGE CASES:
+//    - now < start (clock skew) → returns 0 instead of huge number
+
+uint64_t	time_since(uint64_t start)
 
 //======================== FUNCTION: precise_wait ======================
 //
