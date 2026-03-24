@@ -29,17 +29,25 @@
 //    2. Convert: (seconds * 1000) + (microseconds / 1000)
 //    3. Return result
 
+uint64_t get_time_ms(void)
+{
+  struct timeval tv;
+
+  gettimeofday(&tv, NULL);
+  result = (uint64_t)tv.tv_sec * 1000 + ((uint64_t)tv.tv_usec / 1000);
+  return (result);
+}
 //======================== FUNCTION: time_since ========================
 //
 // PURPOSE:
-//    Returns ms elapsed since a given start timestamp.
-//    Wraps get_time_ms subtraction with underflow protection.
+//    calculate how many milliseconds have passed since a specific starting
+//    timestamp
 //
 // RETURN:
 //    uint64_t — ms elapsed, or 0 if clock skew detected
 //
 // PARAMETERS:
-//    uint64_t start — reference timestamp in ms
+//     uint64_t start — reference timestamp in ms
 //
 // ALGORITHM:
 //    1. Get current time via get_time_ms
@@ -50,12 +58,21 @@
 //    - now < start (clock skew) → returns 0 instead of huge number
 
 uint64_t	time_since(uint64_t start)
+{
+  uint64_t now;
+
+  now = get_time_ms();
+  if (now >= start)
+    return (now - start);
+  return 0;
+}
 
 //======================== FUNCTION: precise_wait ======================
 //
 // PURPOSE:
-//    Sleeps for exactly `ms` milliseconds while checking sim_stop.
-//    Pedro's adaptive 3-granularity sleep — CPU efficient + precise.
+//    Performs the waiting , You pass it the amount of time you want to wait
+//    (e.g., the time needed to eat or sleep), and it pauses the thread
+//    for exactly that long
 //
 // RETURN:
 //    void
@@ -80,3 +97,14 @@ uint64_t	time_since(uint64_t start)
 // EDGE CASES:
 //    - sim_stop mid-sleep → exits immediately, no overshoot
 //    - ms == 0 → loop never entered
+
+void  precise_wait(uint64_t ms, t_data *data)
+{
+  uint64_t start; 
+  uint64_t elapsed;
+  uint64_t remaining; 
+
+  start = get_time_ms();
+  while(!get)
+// TODO : write the get_sim_stop in the print.c file 
+} 
