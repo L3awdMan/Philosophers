@@ -6,7 +6,7 @@
 /*   By: zotaj-di <marvin@42.fr>                    +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/03/18 23:53:02 by zotaj-di          #+#    #+#             */
-/*   Updated: 2026/03/19 15:33:22 by zotaj-di         ###   ########.fr       */
+/*   Updated: 2026/03/25 00:06:13 by zotaj-di         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -29,13 +29,13 @@
 //    2. Convert: (seconds * 1000) + (microseconds / 1000)
 //    3. Return result
 
-uint64_t get_time_ms(void)
+uint64_t	get_time_ms(void)
 {
-  struct timeval tv;
+	struct timeval	tv;
 
-  gettimeofday(&tv, NULL);
-  result = (uint64_t)tv.tv_sec * 1000 + ((uint64_t)tv.tv_usec / 1000);
-  return (result);
+	gettimeofday(&tv, NULL);
+	result = (uint64_t)tv.tv_sec * 1000 + ((uint64_t)tv.tv_usec / 1000);
+	return (result);
 }
 //======================== FUNCTION: time_since ========================
 //
@@ -59,12 +59,12 @@ uint64_t get_time_ms(void)
 
 uint64_t	time_since(uint64_t start)
 {
-  uint64_t now;
+	uint64_t	now;
 
-  now = get_time_ms();
-  if (now >= start)
-    return (now - start);
-  return 0;
+	now = get_time_ms();
+	if (now >= start)
+		return (now - start);
+	return (0);
 }
 
 //======================== FUNCTION: precise_wait ======================
@@ -74,37 +74,35 @@ uint64_t	time_since(uint64_t start)
 //    (e.g., the time needed to eat or sleep), and it pauses the thread
 //    for exactly that long
 //
-// RETURN:
-//    void
-//
-// PARAMETERS:
-//    uint64_t  ms    — duration to wait in milliseconds
-//    t_data   *data  — needed to check sim_stop mid-sleep
-//
 // VARIABLES:
 //    uint64_t start     — timestamp when sleep began
 //    uint64_t elapsed   — ms passed since start
 //    uint64_t remaining — ms left to sleep
 //
 // ALGORITHM:
-//    1. Record start time
-//    2. Loop until elapsed >= ms OR sim is stopped
-//    3. Each iteration:
 //       - remaining > 10ms → usleep(remaining * 500) [coarse]
 //       - remaining > 1ms  → usleep(500)             [fine]
 //       - remaining <= 1ms → usleep(100)             [ultra-fine]
-//
-// EDGE CASES:
-//    - sim_stop mid-sleep → exits immediately, no overshoot
-//    - ms == 0 → loop never entered
+// TODO : b.u remaining time
 
-void  precise_wait(uint64_t ms, t_data *data)
+void	precise_wait(uint64_t ms, t_data *data)
 {
-  uint64_t start; 
-  uint64_t elapsed;
-  uint64_t remaining; 
+	uint64_t	start;
+	uint64_t	elapsed;
+	uint64_t	remaining;
 
-  start = get_time_ms();
-  while(!get)
-// TODO : write the get_sim_stop in the print.c file 
-} 
+	start = get_time_ms();
+	while (!get_sim_stop(data))
+	{
+		elapsed = time_since(start);
+		if (elapsed >= start)
+			break ;
+		remaining = ms - elapsed;
+		if (remaining > 10)
+			usleep(remaining * 100);
+		else if (remaining > 1)
+			usleep(500);
+		else
+			usleep(100);
+	}
+}

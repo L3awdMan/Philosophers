@@ -1,33 +1,34 @@
+/* ************************************************************************** */
+/*                                                                            */
+/*                                                        :::      ::::::::   */
+/*   routine.c                                          :+:      :+:    :+:   */
+/*                                                    +:+ +:+         +:+     */
+/*   By: zotaj-di <marvin@42.fr>                    +#+  +:+       +#+        */
+/*                                                +#+#+#+#+#+   +#+           */
+/*   Created: 2026/03/19 18:24:59 by zotaj-di          #+#    #+#             */
+/*   Updated: 2026/03/25 00:06:13 by zotaj-di         ###   ########.fr       */
+/*                                                                            */
+/* ************************************************************************** */
+
 #include "philo.h"
 
 //======================== FUNCTION: alone_philo ==========================
 //
 // PURPOSE:
-//    Special routine for when there is only 1 philosopher. They grab their single
-//    fork and then wait indefinitely until the monitor thread detects their death.
-//
-// RETURN:
-//    void
-//        - No return value
-//
-// PARAMETERS:
-//    t_philo *philo
-//        - The lonely philosopher
-//
-// VARIABLES:
-//    None
-//
-// ALGORITHM:
-//    1. Call `print_status(philo, FORK)`
-//    2. Call `precise_wait((uint64_t)philo->data->time_to_die + 1, philo->data)`
+//    Special routine for when there is only 1 philosopher.
+//    They grab their single fork and then wait indefinitely until the monitor
+//    thread detects their death.
 //
 // EDGE CASES:
 //    - Prevents deadlock since one philo can never get a second fork.
 //
 // EXAMPLE:
 //    alone_philo(philo) → waits to die
+
 void	alone_philo(t_philo *philo)
 {
+	print_status(philo, TAKE_FORK);
+	precise_wait((uint64_t)philo->data->time_to_die + 1, philo->data);
 }
 
 //======================== FUNCTION: eat ==========================
@@ -36,40 +37,26 @@ void	alone_philo(t_philo *philo)
 //    Performs the entire eating cycle: lock both forks, update meal timers,
 //    wait for eating duration, and release forks.
 //
-// RETURN:
-//    void
-//        - No return value
-//
-// PARAMETERS:
-//    t_philo *philo
-//        - Philosopher trying to eat
-//
-// VARIABLES:
-//    t_data *data
-//        - Extract pointer from philo
-//
-// ALGORITHM:
-//    1. Assign `data` to `philo->data`
-//    2. Lock `philo->first_fork`
-//    3. Call `print_status(philo, FORK)`
-//    4. Lock `philo->second_fork`
-//    5. Call `print_status(philo, FORK)`
-//    6. Call `print_status(philo, EATING)`
-//    7. Lock `philo->meal_mutex`
-//    8. Assign `philo->last_meal_time` to `get_time_ms()`
-//    9. Increment `philo->meal_count` by 1
-//    10. Unlock `philo->meal_mutex`
-//    11. Call `precise_wait((uint64_t)data->time_to_eat, data)`
-//    12. Unlock `philo->second_fork`
-//    13. Unlock `philo->first_fork`
-//
-// EDGE CASES:
-//    - Relies on correct lock hierarchy established in `set_forks` to avoid deadlock.
-//
 // EXAMPLE:
 //    eat(philo) → locks, eats, updates, unlocks
+
 void	eat(t_philo *philo)
 {
+	t_data	*data;
+
+	data = philo->data;
+	pthread_mutex_lock(philo->first_fork);
+	print_status(philo, TAKE_FORK);
+	pthread_mutex_lock(philo->second_fork);
+	print_status(philo, TAKE_FORK);
+	print_status(philo, EATING);
+	pthread_mutex_lock(&philo->meal_mutex);
+	philo->last_meal_time = get_time_ms();
+	philo->meal_count += 1;
+	pthread_mutex_unlock(&philo->meal_mutex);
+	precise_wait((uint64_t)data->time_to_eat, data);
+	pthread_mutex_unlock(philo->second_fork);
+	pthread_mutex_unlock(philo->first_fork);
 }
 
 //======================== FUNCTION: philo_sleep ==========================
@@ -77,43 +64,21 @@ void	eat(t_philo *philo)
 // PURPOSE:
 //    Handles the sleeping state for the specified duration.
 //
-// RETURN:
-//    void
-//        - No return value
-//
-// PARAMETERS:
-//    t_philo *philo
-//        - Philosopher going to sleep
-//
-// VARIABLES:
-//    None
-//
-// ALGORITHM:
-//    1. Call `print_status(philo, SLEEPING)`
-//    2. Call `precise_wait((uint64_t)philo->data->time_to_sleep, philo->data)`
-//
-// EDGE CASES:
-//    - precise_wait allows the sleep to be interrupted if the simulation ends.
-//
 // EXAMPLE:
 //    philo_sleep(philo) → prints sleep, waits
+
 void	philo_sleep(t_philo *philo)
 {
+	print_status(philo, SLEEPING);
+	precise_wait((uint64_t)philo->data->time_to_sleep, philo->data);
 }
 
 //======================== FUNCTION: think ==========================
 //
 // PURPOSE:
-//    Calculates the optimal time to think before trying to eat again. This prevents
-//    cpu hogging and organizes fork distribution among odd/even philos.
-//
-// RETURN:
-//    void
-//        - No return value
-//
-// PARAMETERS:
-//    t_philo *philo
-//        - Philosopher thinking
+//    Calculates the optimal time to think before trying to eat again.
+//    This prevents cpu hogging and organizes fork distribution a
+//    mong odd/even philos.
 //
 // VARIABLES:
 //    uint64_t since_meal
@@ -142,8 +107,14 @@ void	philo_sleep(t_philo *philo)
 //
 // EXAMPLE:
 //    think(philo) → calculates time and sleeps slightly
+
 void	think(t_philo *philo)
 {
+	uint64_t	since_meal;
+	uint64_t	think_time;
+	uint64_t	lm;
+
+	// TODO : FINISH DOING the get_meal_data() in monitor.c file
 }
 
 //======================== FUNCTION: philo_routine ==========================
@@ -186,11 +157,12 @@ void	think(t_philo *philo)
 //    9. Return NULL
 //
 // EDGE CASES:
-//    - The staggered delays at the start (steps 6 & 7) organize the initial fork
-//      acquisition to avoid a massive race condition.
+// - The staggered delays at the start (steps 6 & 7) organize the initial fork
+//     acquisition to avoid a massive race condition.
 //
 // EXAMPLE:
 //    philo_routine(philo) → runs indefinitely until stopped
+
 void	*philo_routine(void *arg)
 {
 }

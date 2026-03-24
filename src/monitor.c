@@ -1,24 +1,30 @@
+/* ************************************************************************** */
+/*                                                                            */
+/*                                                        :::      ::::::::   */
+/*   monitor.c                                          :+:      :+:    :+:   */
+/*                                                    +:+ +:+         +:+     */
+/*   By: zotaj-di <marvin@42.fr>                    +#+  +:+       +#+        */
+/*                                                +#+#+#+#+#+   +#+           */
+/*   Created: 2026/03/18 00:05:33 by zotaj-di          #+#    #+#             */
+/*   Updated: 2026/03/25 00:06:13 by zotaj-di         ###   ########.fr       */
+/*                                                                            */
+/* ************************************************************************** */
+
 #include "philo.h"
 
 //======================== FUNCTION: get_meal_data ==========================
 //
 // PURPOSE:
-//    Thread-safely retrieves the last meal time and meal count of a philosopher.
+//   Thread-safely get/bring the last meal time and meal count of a philosopher
 //
 // RETURN:
 //    void
 //        - Modifies values through pointers.
 //
 // PARAMETERS:
-//    t_philo *philo
-//        - Philosopher to check
-//    uint64_t *lm
-//        - Pointer to store the last meal time
-//    int *mc
-//        - Pointer to store the meal count
-//
-// VARIABLES:
-//    None
+//    t_philo *philo - Philosopher to check
+//    uint64_t *lm - Pointer to store the last meal time
+//    int *mc - Pointer to store the meal count
 //
 // ALGORITHM:
 //    1. Lock `philo->meal_mutex`
@@ -31,8 +37,12 @@
 //
 // EXAMPLE:
 //    get_meal_data(p, &lm, &mc) → lm = 500, mc = 2
+
 void	get_meal_data(t_philo *philo, uint64_t *lm, int *mc)
 {
+	t_philo		*philo;
+	uint64_t	*lm;
+	int			*mc;
 }
 
 //======================== FUNCTION: stop_sim_death ==========================
@@ -60,7 +70,7 @@ void	get_meal_data(t_philo *philo, uint64_t *lm, int *mc)
 //    4. Unlock `data->print_mutex`
 //
 // EDGE CASES:
-//    - Printing inside a separate mutex ensures the death message doesn't overlap.
+// - Printing inside a separate mutex ensures the death message doesn't overlap.
 //
 // EXAMPLE:
 //    stop_sim_death(data, 3) → Sets flag and prints "801 3 died"
@@ -68,10 +78,11 @@ void	stop_sim_death(t_data *data, int id)
 {
 }
 
-//======================== FUNCTION: check_philo_death ==========================
+//======================= FUNCTION: check_philo_death ==========================
 //
 // PURPOSE:
-//    Checks if a specific philosopher has starved (time since last meal > time_to_die).
+//    Checks if a specific philosopher has starved
+//    (time since last meal > time_to_die).
 //
 // RETURN:
 //    int
@@ -92,17 +103,20 @@ void	stop_sim_death(t_data *data, int id)
 //
 // ALGORITHM:
 //    1. Call `get_meal_data(&data->philos[i], &last_meal, &mc)`
-//    2. If `last_meal` is 0, return 0 (means thread hasn't properly initialized yet)
+//    2. If `last_meal` is 0,
+//	return 0 (means thread hasn't properly initialized yet)
 //    3. Check if `time_since(last_meal)` is greater than `(uint64_t)data->time_to_die`
 //       3a. If true, call `stop_sim_death(data, i + 1)`
 //       3b. Return 1
 //    4. Return 0
 //
 // EDGE CASES:
-//    - last_meal == 0 happens at very start, we must ignore it to avoid false deaths.
+//    - last_meal == 0 happens at very start,	we must ignore it
+//      to avoid false deaths.
 //
 // EXAMPLE:
-//    check_philo_death(data, 2) → 1 (if time since meal is 805 and limit is 800)
+//  check_philo_death(data,	2) → 1 (if time since meal is 805 and limit is 800)
+
 int	check_philo_death(t_data *data, int i)
 {
 }
@@ -134,7 +148,8 @@ int	check_philo_death(t_data *data, int i)
 //    2. Initialize `i` to 0
 //    3. Enter a while loop that runs while `i < data->philo_count`
 //       3a. Call `get_meal_data(&data->philos[i], &lm, &mc)`
-//       3b. If `mc < data->max_meals`, return 0 (found someone who needs to eat)
+//       3b. If `mc < data->max_meals`,
+//           return 0 (found someone who needs to eat)
 //       3c. Increment `i` by 1
 //    4. Return 1 (loop finished, everyone ate enough)
 //
@@ -143,6 +158,7 @@ int	check_philo_death(t_data *data, int i)
 //
 // EXAMPLE:
 //    check_all_ate(data) → 1
+
 int	check_all_ate(t_data *data)
 {
 }
@@ -150,7 +166,8 @@ int	check_all_ate(t_data *data)
 //======================== FUNCTION: monitor_routine ==========================
 //
 // PURPOSE:
-//    The infinite loop running in the monitor thread to check for deaths or meal fulfillment.
+//    The infinite loop running in the monitor thread to check
+//    for deaths or meal fulfillment.
 //
 // RETURN:
 //    void *
@@ -173,7 +190,8 @@ int	check_all_ate(t_data *data)
 //    3. Enter a while loop that runs while `!get_sim_stop(data)`
 //       3a. Initialize `i` to 0
 //       3b. Enter a while loop that runs while `i < data->philo_count`
-//           3b1. If `check_philo_death(data, i)` returns true, return NULL (thread exits)
+//           3b1. If `check_philo_death(data, i)` returns true,
+//              	return NULL (thread exits)
 //           3b2. Increment `i` by 1
 //       3c. If `check_all_ate(data)` returns true
 //           3c1. Call `set_sim_stop(data)`
@@ -182,10 +200,12 @@ int	check_all_ate(t_data *data)
 //    4. Return NULL
 //
 // EDGE CASES:
-//    - Must wait for `all_started` flag before checking conditions, otherwise it triggers false positives.
+//    - Must wait for `all_started` flag before checking conditions,
+//     	otherwise it triggers false positives.
 //
 // EXAMPLE:
 //    monitor_routine(data) → Starts monitoring
+
 void	*monitor_routine(void *arg)
 {
 }
