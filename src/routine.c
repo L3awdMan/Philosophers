@@ -12,6 +12,60 @@
 
 #include "philo.h"
 
+//======================== FUNCTION: philo_routine ==========================
+//
+// PURPOSE:
+//    The main lifecycle loop for a philosopher thread: eat, sleep, think.
+//
+//        - Returns NULL when thread ends
+//
+// ALGORITHM:
+//    1. Assign `philo` to `(t_philo *)arg`
+//    2. Assign `data` to `philo->data`
+//    3. Call `signal_ready(data)` to acknowledge creation and wait for start
+//       signal, basically like a handshake
+//    4. Call `set_last_meal(philo, data->start_time)`
+//    5. If `data->philo_count == 1`
+//       5a. Call `alone_philo(philo)` and Return NULL
+//    6. If `data->philo_count` is odd AND `philo->id == data->philo_count`
+//       6a. Call `precise_wait((uint64_t)data->time_to_eat * 2, data)`
+//    7. Else if `philo->id % 2 == 0` (even philosophers)
+//       7a. Call `precise_wait((uint64_t)data->time_to_eat / 2, data)`
+//    8. Enter a while loop that runs while `!get_sim_stop(data)`
+//       8a. Call `eat(philo)`
+//       8b. If `get_sim_stop(data)` is true, break out of loop
+//       8c. Call `philo_sleep(philo)`
+//       8d. If `get_sim_stop(data)` is true, break out of loop
+//       8e. Call `think(philo)`
+//    9. Return NULL
+
+void	*philo_routine(void *arg)
+{
+	t_philo	*philo;
+	t_data	*data;
+
+	philo = (t_philo *)arg;
+	data = philo->data;
+	signal_ready(data);
+	set_last_meal(philo, data->start_time);
+	if (data->philo_count == 1)
+		return (alone_philo(philo), NULL);
+	if (data->philo_count % 2 == 1 && philo->id == data->philo_count)
+		precise_wait((uint64_t)data->time_to_eat * 2, data);
+	else if (philo->id % 2 == 0)
+		precise_wait((uint64_t)data->time_to_eat / 2, data);
+	while (!get_sim_stop(data))
+	{
+		eat(philo);
+		if (get_sim_stop(data))
+			break ;
+		philo_sleep(philo);
+		if (get_sim_stop(data))
+			break ;
+		think(philo);
+	}
+	return (NULL);
+}
 //======================== FUNCTION: alone_philo ==========================
 //
 // PURPOSE:
@@ -80,89 +134,43 @@ void	philo_sleep(t_philo *philo)
 //    This prevents cpu hogging and organizes fork distribution a
 //    mong odd/even philos.
 //
-// VARIABLES:
-//    uint64_t since_meal
-//        - Time elapsed since last meal
-//    uint64_t think_time
-//        - Calculated sleep duration for thinking
-//    uint64_t lm
-//        - Last meal timestamp
-//    int mc
-//        - Meal count
-//
 // ALGORITHM:
 //    1. Call `get_meal_data(philo, &lm, &mc)`
 //    2. Assign `since_meal` to `time_since(lm)`
+//       " how much time has passed from the last meal until now "
 //    3. Check if `since_meal + time_to_eat >= time_to_die`
-//       3a. If true, set `think_time` to 0 (must eat immediately or die)
+//       "If I start eating right now, will I finish before my time runs out?"
+//       3a. If TRUE, (Danger): It sets think_time = 0
 //    4. Else
-//       4a. Set `think_time` to `(time_to_die - since_meal - time_to_eat) / 2`
+//       4a. Set : think_time = (time_to_die - since_meal - time_to_eat) / 2
+//           - "time_to_die - since_meal" : This is how much time you have left
+//                                        before you must be finished eating.
+//           - "... - time_to_eat" : This subtracts the time you actually need 
+//                                  to spend eating 
+//           - " THE / 2 ": If a philosopher uses all of their time to think, 
+//                        they might die 
 //    5. If `think_time > time_to_eat`
 //       5a. Assign `think_time` to `time_to_eat` (cap it)
-//    6. Call `print_status(philo, THINKING)`
-//    7. Call `precise_wait(think_time, philo->data)`
-//
-// EDGE CASES:
-//    - Formula balances thinking time to ensure fairness under heavy load.
-//
-// EXAMPLE:
-//    think(philo) → calculates time and sleeps slightly
 
 void	think(t_philo *philo)
 {
 	uint64_t	since_meal;
 	uint64_t	think_time;
 	uint64_t	lm;
+	int			mc;
 
-	// TODO : FINISH DOING the get_meal_data() in monitor.c file
+	get_meal_data(philo, &lm, &mc);
+	since_meal = time_since(lm);
+	if (since_meal + (uint64_t)philo->data->time_to_eat
+		>= (uint64_t)philo->data->time_to_die)
+		think_time = 0;
+	else
+		think_time = ((uint64_t)philo->data->time_to_die
+				- since_meal
+				- (uint64_t)philo->data->time_to_eat) / 2;
+	if (think_time > (uint64_t)philo->data->time_to_eat)
+		think_time = (uint64_t)philo->data->time_to_eat;
+	print_status(philo, THINKING);
+	precise_wait(think_time, philo->data);
 }
 
-//======================== FUNCTION: philo_routine ==========================
-//
-// PURPOSE:
-//    The main lifecycle loop for a philosopher thread: eat, sleep, think.
-//
-// RETURN:
-//    void *
-//        - Returns NULL when thread ends
-//
-// PARAMETERS:
-//    void *arg
-//        - Cast to `t_philo *`
-//
-// VARIABLES:
-//    t_philo *philo
-//        - The philosopher
-//    t_data *data
-//        - The main data struct
-//
-// ALGORITHM:
-//    1. Assign `philo` to `(t_philo *)arg`
-//    2. Assign `data` to `philo->data`
-//    3. Call `signal_ready(data)` to acknowledge creation and wait for global start signal
-//    4. Call `set_last_meal(philo, data->start_time)`
-//    5. If `data->philo_count == 1`
-//       5a. Call `alone_philo(philo)`
-//       5b. Return NULL
-//    6. If `data->philo_count` is odd AND `philo->id == data->philo_count`
-//       6a. Call `precise_wait((uint64_t)data->time_to_eat * 2, data)`
-//    7. Else if `philo->id % 2 == 0` (even philosophers)
-//       7a. Call `precise_wait((uint64_t)data->time_to_eat / 2, data)`
-//    8. Enter a while loop that runs while `!get_sim_stop(data)`
-//       8a. Call `eat(philo)`
-//       8b. If `get_sim_stop(data)` is true, break out of loop
-//       8c. Call `philo_sleep(philo)`
-//       8d. If `get_sim_stop(data)` is true, break out of loop
-//       8e. Call `think(philo)`
-//    9. Return NULL
-//
-// EDGE CASES:
-// - The staggered delays at the start (steps 6 & 7) organize the initial fork
-//     acquisition to avoid a massive race condition.
-//
-// EXAMPLE:
-//    philo_routine(philo) → runs indefinitely until stopped
-
-void	*philo_routine(void *arg)
-{
-}

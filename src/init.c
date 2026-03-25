@@ -67,7 +67,7 @@ void	set_forks(t_philo *philo, t_data *data)
 	int	right;
 
 	left = philo->id - 1;
-	right = philo->id % philo_count;
+	right = philo->id % data->philo_count;
 	if (left < right)
 	{
 		philo->first_fork = &data->forks[left];

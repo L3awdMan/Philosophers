@@ -12,55 +12,6 @@
 
 #include "philo.h"
 
-//======================== FUNCTION: parse_args ========================
-//
-// PURPOSE:
-//    Entry point for all argument parsing.
-//    Validates argument count, fills all t_data fields.
-//    max_meals defaults to -1 when optional arg is absent.
-//
-// RETURN:
-//    int
-//        1 → all fields parsed and valid
-//        0 → any argument invalid, error printed to stderr
-//
-// PARAMETERS:
-//    t_data  *data — destination struct
-//    int      ac   — argc from main
-//    char   **av   — argv from main
-//
-// ALGORITHM:
-//    1. Check ac is 5 or 6
-//    2. Parse and validate philo_count — also check 0 < n <= MAX_PHILOS
-//    3. Parse time_to_die, time_to_eat, time_to_sleep
-//    4. If ac == 6, parse max_meals — else default to -1
-//    5. Return 1
-//
-// EDGE CASES:
-//    - philo_count == 0 → rejected
-//    - philo_count > MAX_PHILOS → rejected
-//    - max_meals absent → -1 (no meal limit)
-
-int	parse_args(t_data *data, int ac, char **av)
-{
-	if (ac != 5 && ac != 6)
-		return (ft_error("Usage: philo n t_die t_eat t_sleep [meals]"), 0);
-	if (!set_value(&data->philo_count, av[1]))
-		return (0);
-	if (data->philo_count == 0 || data->philo_count > MAX_PHILOS)
-		return (ft_error("Error: invalid philosopher count"), 0);
-	if (!set_value(&data->time_to_die, av[2]))
-		return (0);
-	if (!set_value(&data->time_to_eat, av[3]))
-		return (0);
-	if (!set_value(&data->time_to_sleep, av[4]))
-		return (0);
-	data->max_meals = -1;
-	if (ac == 6 && !set_value(&data->max_meals, av[5]))
-		return (0);
-	return (1);
-}
-
 //======================== FUNCTION: ft_atoi ===========================
 //
 // PURPOSE:
@@ -173,5 +124,54 @@ static int	set_value(int *dst, char *str)
 	if (!check_overflow(str))
 		return (ft_error("Error: integer overflow"), 0);
 	*dst = ft_atoi(str);
+	return (1);
+}
+
+//======================== FUNCTION: parse_args ========================
+//
+// PURPOSE:
+//    Entry point for all argument parsing.
+//    Validates argument count, fills all t_data fields.
+//    max_meals defaults to -1 when optional arg is absent.
+//
+// RETURN:
+//    int
+//        1 → all fields parsed and valid
+//        0 → any argument invalid, error printed to stderr
+//
+// PARAMETERS:
+//    t_data  *data — destination struct
+//    int      ac   — argc from main
+//    char   **av   — argv from main
+//
+// ALGORITHM:
+//    1. Check ac is 5 or 6
+//    2. Parse and validate philo_count — also check 0 < n <= MAX_PHILOS
+//    3. Parse time_to_die, time_to_eat, time_to_sleep
+//    4. If ac == 6, parse max_meals — else default to -1
+//    5. Return 1
+//
+// EDGE CASES:
+//    - philo_count == 0 → rejected
+//    - philo_count > MAX_PHILOS → rejected
+//    - max_meals absent → -1 (no meal limit)
+
+int	parse_args(t_data *data, int ac, char **av)
+{
+	if (ac != 5 && ac != 6)
+		return (ft_error("Usage: philo n t_die t_eat t_sleep [meals]"), 0);
+	if (!set_value(&data->philo_count, av[1]))
+		return (0);
+	if (data->philo_count == 0 || data->philo_count > MAX_PHILOS)
+		return (ft_error("Error: invalid philosopher count"), 0);
+	if (!set_value(&data->time_to_die, av[2]))
+		return (0);
+	if (!set_value(&data->time_to_eat, av[3]))
+		return (0);
+	if (!set_value(&data->time_to_sleep, av[4]))
+		return (0);
+	data->max_meals = -1;
+	if (ac == 6 && !set_value(&data->max_meals, av[5]))
+		return (0);
 	return (1);
 }

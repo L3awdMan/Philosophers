@@ -34,8 +34,7 @@ uint64_t	get_time_ms(void)
 	struct timeval	tv;
 
 	gettimeofday(&tv, NULL);
-	result = (uint64_t)tv.tv_sec * 1000 + ((uint64_t)tv.tv_usec / 1000);
-	return (result);
+	return ((uint64_t)tv.tv_sec * 1000 + ((uint64_t)tv.tv_usec / 1000));
 }
 //======================== FUNCTION: time_since ========================
 //
@@ -95,7 +94,7 @@ void	precise_wait(uint64_t ms, t_data *data)
 	while (!get_sim_stop(data))
 	{
 		elapsed = time_since(start);
-		if (elapsed >= start)
+		if (elapsed >= ms)
 			break ;
 		remaining = ms - elapsed;
 		if (remaining > 10)

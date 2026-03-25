@@ -20,15 +20,20 @@
 //    Every single loop! Philosophers use this constantly :
 //    (while (!get_sim_stop(data))) to know if they should keep eating/sleeping
 //    or if they should exit their threads.
+//
+// RETURN:
+//    int
+//        - 1  → Simulation is stopped
+//        - 0  → Simulation is running
 
 int	get_sim_stop(t_data *data)
 {
-	int	var;
+	int	flag;
 
 	pthread_mutex_lock(&data->state_mutex);
-	var = data->sim_stop;
+	flag = data->sim_stop;
 	pthread_mutex_unlock(&data->state_mutex);
-	return (val);
+	return (flag);
 }
 
 //======================== FUNCTION: set_sim_stop ======================
@@ -43,7 +48,7 @@ int	get_sim_stop(t_data *data)
 void	set_sim_stop(t_data *data)
 {
 	pthread_mutex_lock(&data->state_mutex);
-	sim_stop = 1;
+	data->sim_stop = 1;
 	pthread_mutex_unlock(&data->state_mutex);
 }
 //======================== FUNCTION: print_line ========================
@@ -72,12 +77,11 @@ void	print_line(t_data *data, int id, t_status status)
 {
 	static char	*msgs[5];
 
-	msgs[0] = "null_opr";
-	msgs[1] = "died";
-	msgs[2] = "is eating";
-	msgs[3] = "is sleeping";
-	msgs[4] = "is thinking";
-	msgs[5] = "has taken a fork";
+	msgs[0] = "died";
+	msgs[1] = "is eating";
+	msgs[2] = "is sleeping";
+	msgs[3] = "is thinking";
+	msgs[4] = "has taken a fork";
 	printf("%lu %d %s\n", time_since(data->start_time), id, msgs[status]);
 }
 
@@ -108,6 +112,7 @@ void	print_status(t_philo *philo, t_status status)
 {
 	t_data	*data;
 
+	data = philo->data;
 	pthread_mutex_lock(&data->state_mutex);
 	if (data->sim_stop && status != DIED)
 	{
@@ -120,7 +125,7 @@ void	print_status(t_philo *philo, t_status status)
 	if (!data->sim_stop || status == DIED)
 	{
 		pthread_mutex_unlock(&data->state_mutex);
-		print_status(data, philo->id, status);
+		print_line(data, philo->id, status);
 	}
 	else
 		pthread_mutex_unlock(&data->state_mutex);

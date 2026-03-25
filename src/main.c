@@ -88,9 +88,46 @@ int	main(int ac, char **av)
 	if (!init_data(&data))
 		return (1);
 	if (!init_philos(&data))
-		return (cleanup_data(&data), 1);
+		return (destroy_mutexes(&data), 1);
 	if (!start_simulation(&data))
-		return (cleanup_data(&data), 1);
-	cleanup_data(&data);
+		return (destroy_mutexes(&data), 1);
+	join_threads(&data);
+	destroy_mutexes(&data);
 	return (0);
+}
+
+int	start_simulation(t_data *data)
+{
+	int	i;
+
+	if (pthread_create(&data->monitor_thread, NULL,
+			monitor_routine, data) != 0)
+		return (0);
+	i = 0;
+	while (i < data->philo_count)
+	{
+		if (pthread_create(&data->philos[i].thread, NULL,
+				philo_routine, &data->philos[i]) != 0)
+			return (0);
+		i++;
+	}
+	wait_for_start(data);
+	pthread_mutex_lock(&data->state_mutex);
+	data->start_time = get_time_ms();
+	data->all_started = 1;
+	pthread_mutex_unlock(&data->state_mutex);
+	return (1);
+}
+
+void	join_threads(t_data *data)
+{
+	int	i;
+
+	pthread_join(data->monitor_thread, NULL);
+	i = 0;
+	while (i < data->philo_count)
+	{
+		pthread_join(data->philos[i].thread, NULL);
+		i++;
+	}
 }
