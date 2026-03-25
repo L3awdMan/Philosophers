@@ -6,7 +6,7 @@
 /*   By: zotaj-di <marvin@42.fr>                    +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/03/18 00:14:20 by zotaj-di          #+#    #+#             */
-/*   Updated: 2026/03/24 23:57:33 by zotaj-di         ###   ########.fr       */
+/*   Updated: 2026/03/26 00:00:58 by zotaj-di         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -14,10 +14,10 @@
 # define PHILO_H
 
 # include <pthread.h>
-# include <stdint.h> 
+# include <stdint.h>
 # include <stdio.h>
 # include <stdlib.h>
-# include <string.h>   
+# include <string.h>
 # include <sys/time.h>
 # include <unistd.h>
 
@@ -31,30 +31,31 @@ typedef enum e_status
 	EATING,
 	SLEEPING,
 	THINKING,
-	TAKE_FORK, 
+	TAKE_FORK,
 }						t_status;
+
 /*
 ** struct s_philo represents an individual philosopher.
 **
 ** id             : The philosopher's unique identifier (1 to philo_count).
-** last_meal_time : Timestamp in ms of when the philosopher last started eating.
+** last_meal_time : Timestamp in ms of when the philosopher last started eating
 ** meal_count     : Number of times this philosopher has eaten.
 ** thread         : The pthread handling this philosopher's lifecycle.
-** first_fork     : Pointer to the first mutex fork to lock (lowest index to avoid deadlock).
+** first_fork     : Pointer to the first mutex fork to lock
 ** second_fork    : Pointer to the second mutex fork to lock.
-** meal_mutex     : Mutex protecting read/writes to last_meal_time and meal_count.
+** meal_mutex     : Mutex protecting read/writes to last_meal_time and m_count
 ** data           : Pointer to the shared global data structure.
 */
 typedef struct s_philo
 {
-	int id;   
-	uint64_t last_meal_time; 
-	int meal_count;        
-	pthread_t thread;     
-	pthread_mutex_t *first_fork; 
-	pthread_mutex_t *second_fork;
-	pthread_mutex_t meal_mutex; 
-	t_data *data;              
+	int					id;
+	uint64_t			last_meal_time;
+	int					meal_count;
+	pthread_t			thread;
+	pthread_mutex_t		*first_fork;
+	pthread_mutex_t		*second_fork;
+	pthread_mutex_t		meal_mutex;
+	t_data				*data;
 }						t_philo;
 
 /*
@@ -70,28 +71,29 @@ typedef struct s_philo
 ** forks          : Array of mutexes representing the shared forks.
 ** monitor_thread : The pthread running the death/meal checking routine.
 ** print_mutex    : Mutex to prevent scrambled logging in standard output.
-** state_mutex    : Mutex protecting global flags (sim_stop, threads_ready, all_started).
+** state_mutex    : Mutex protecting global flags (sim_stop, threads_ready,
+	all_started).
 ** sim_stop       : Flag indicating if the simulation should end (1 = stop).
-** threads_ready  : Counter for how many threads have successfully initialized.
-** all_started    : Flag flipped by the main thread to synchronize the start of all philos.
+** threads_ready  : Counter for how many threads have successfully initialized
+** all_started    : Flag for the main thread to sync the start of all philos.
 */
 
 struct					s_data
 {
-	int philo_count;
-	uint64_t			start_time;	
-	int time_to_die;        
-	int time_to_eat;       
-	int time_to_sleep;    
-	int max_meals;                     
-	t_philo philos[MAX_PHILOS];        
-	pthread_mutex_t forks[MAX_PHILOS];
-	pthread_t monitor_thread;        
-	pthread_mutex_t print_mutex;    
-	pthread_mutex_t state_mutex;   
-	int sim_stop;                 
-	int threads_ready;           
-	int all_started;            
+	int					philo_count;
+	uint64_t			start_time;
+	int					time_to_die;
+	int					time_to_eat;
+	int					time_to_sleep;
+	int					max_meals;
+	t_philo				philos[MAX_PHILOS];
+	pthread_mutex_t		forks[MAX_PHILOS];
+	pthread_t			monitor_thread;
+	pthread_mutex_t		print_mutex;
+	pthread_mutex_t		state_mutex;
+	int					sim_stop;
+	int					threads_ready;
+	int					all_started;
 };
 
 typedef enum e_err

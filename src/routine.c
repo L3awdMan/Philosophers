@@ -6,7 +6,7 @@
 /*   By: zotaj-di <marvin@42.fr>                    +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/03/19 18:24:59 by zotaj-di          #+#    #+#             */
-/*   Updated: 2026/03/25 00:06:13 by zotaj-di         ###   ########.fr       */
+/*   Updated: 2026/03/26 00:12:17 by zotaj-di         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -145,10 +145,10 @@ void	philo_sleep(t_philo *philo)
 //       4a. Set : think_time = (time_to_die - since_meal - time_to_eat) / 2
 //           - "time_to_die - since_meal" : This is how much time you have left
 //                                        before you must be finished eating.
-//           - "... - time_to_eat" : This subtracts the time you actually need 
-//                                  to spend eating 
-//           - " THE / 2 ": If a philosopher uses all of their time to think, 
-//                        they might die 
+//           - "... - time_to_eat" : This subtracts the time you actually need
+//                                  to spend eating
+//           - " THE / 2 ": If a philosopher uses all of their time to think,
+//                        they might die
 //    5. If `think_time > time_to_eat`
 //       5a. Assign `think_time` to `time_to_eat` (cap it)
 
@@ -161,16 +161,13 @@ void	think(t_philo *philo)
 
 	get_meal_data(philo, &lm, &mc);
 	since_meal = time_since(lm);
-	if (since_meal + (uint64_t)philo->data->time_to_eat
-		>= (uint64_t)philo->data->time_to_die)
+	if (since_meal + philo->data->time_to_eat >= philo->data->time_to_die)
 		think_time = 0;
 	else
-		think_time = ((uint64_t)philo->data->time_to_die
-				- since_meal
+		think_time = ((uint64_t)philo->data->time_to_die - since_meal
 				- (uint64_t)philo->data->time_to_eat) / 2;
 	if (think_time > (uint64_t)philo->data->time_to_eat)
 		think_time = (uint64_t)philo->data->time_to_eat;
 	print_status(philo, THINKING);
 	precise_wait(think_time, philo->data);
 }
-

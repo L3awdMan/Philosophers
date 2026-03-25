@@ -6,7 +6,7 @@
 /*   By: zotaj-di <marvin@42.fr>                    +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/03/18 00:05:33 by zotaj-di          #+#    #+#             */
-/*   Updated: 2026/03/25 00:06:13 by zotaj-di         ###   ########.fr       */
+/*   Updated: 2026/03/26 00:10:00 by zotaj-di         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -21,45 +21,45 @@
 //        - Returns NULL when simulation stops (thread exit)
 //
 // ALGORITHM:
-//    2. Enter a while loop waits until the main thread has successfully 
+//    2. Enter a while loop waits until the main thread has successfully
 //       created all philosopher thread and set the all_started flag to 1
 //    3. Enter a while loop that runs while `!get_sim_stop(data)`
 //       3b. Enter a while loop that runs as long as the simulation hasn't
 //           been stopped
-//           3b1. If `check_philo_death(data, i)` returns true, means 
-//                  a philosopher died, the monitor immediately returns NULL, 
+//           3b1. If `check_philo_death(data, i)` returns true, means
+//                  a philosopher died, the monitor immediately returns NULL,
 //                  which stops the thread .
 //           3b2. Increment `i` by 1
 //       3c. After checking all philosophers for death, it calls check_all_ate()
-//           3c1. If every philosopher has finished their required 
+//           3c1. If every philosopher has finished their required
 //                number of meals (if a limit was set), it calls set_sim_stop()
 //                to end the simulation and returns NULL
 //       3d. Call `usleep(500)`
-//           "This prevents the monitor thread from using 
+//           "This prevents the monitor thread from using
 //           100% of the CPU while it waits for"
 
 void	*monitor_routine(void *arg)
 {
-  t_data *data;
-  int i;
+	t_data	*data;
+	int		i;
 
-  data = (t_data *)arg;
-  while(!get_all_started(data))
-    usleep(50);
-  while(!get_sim_stop(data))
-  {
-    i = 0;
-    while(i < data->philo_count)
-    {
-      if(check_philo_death(data, i))
-        return NULL;
-      i++;
-    }
-    if (check_all_ate(data))
-      return (set_sim_stop(data), NULL);
-    usleep(500);
-  }
-  return NULL;
+	data = (t_data *)arg;
+	while (!get_all_started(data))
+		usleep(50);
+	while (!get_sim_stop(data))
+	{
+		i = 0;
+		while (i < data->philo_count)
+		{
+			if (check_philo_death(data, i))
+				return (NULL);
+			i++;
+		}
+		if (check_all_ate(data))
+			return (set_sim_stop(data), NULL);
+		usleep(500);
+	}
+	return (NULL);
 }
 
 //======================== FUNCTION: get_meal_data ==========================
@@ -75,7 +75,7 @@ void	*monitor_routine(void *arg)
 
 void	get_meal_data(t_philo *philo, uint64_t *last_m, int *m_count)
 {
-  pthread_mutex_lock(&philo->meal_mutex);
+	pthread_mutex_lock(&philo->meal_mutex);
 	*last_m = philo->last_meal_time;
 	*m_count = philo->meal_count;
 	pthread_mutex_unlock(&philo->meal_mutex);
@@ -94,10 +94,10 @@ void	get_meal_data(t_philo *philo, uint64_t *last_m, int *m_count)
 
 void	stop_sim_death(t_data *data, int id)
 {
-  set_sim_stop(data);
-  pthread_mutex_lock(&data->print_mutex);
-  printf("%lu %d died\n", time_since(data->start_time), id);
-  pthread_mutex_unlock(&data->print_mutex);
+	set_sim_stop(data);
+	pthread_mutex_lock(&data->print_mutex);
+	printf("%lu %d died\n", time_since(data->start_time), id);
+	pthread_mutex_unlock(&data->print_mutex);
 }
 
 //======================= FUNCTION: check_philo_death ==========================
@@ -112,8 +112,8 @@ void	stop_sim_death(t_data *data, int id)
 //
 // ALGORITHM:
 //    2. If `last_meal` is 0,
-//	     return 0 (means thread hasn't properly initialized yet)
-//    3. Check if `time_since(last_meal)` is greater than `(uint64_t)data->time_to_die`
+//			return 0 (means thread hasn't properly initialized yet)
+//    3. Check if `time_since(last_meal)` > `(uint64_t)data->time_to_die`
 //       3a. If true, call `stop_sim_death(data, i + 1)`
 //       3b. Return 1
 //    4. Return 0
@@ -127,15 +127,15 @@ void	stop_sim_death(t_data *data, int id)
 
 int	check_philo_death(t_data *data, int i)
 {
-  uint64_t  last_meal;
-  int m_count;
+	uint64_t	last_meal;
+	int			m_count;
 
-  get_meal_data(&data->philos[i], &last_meal, &m_count);
-  if (last_meal == 0)
-    return 0;
-  if (time_since(last_meal) > (uint64_t)data->time_to_die)
-    return (stop_sim_death(data, i + 1), 1);
-  return 0;
+	get_meal_data(&data->philos[i], &last_meal, &m_count);
+	if (last_meal == 0)
+		return (0);
+	if (time_since(last_meal) > (uint64_t)data->time_to_die)
+		return (stop_sim_death(data, i + 1), 1);
+	return (0);
 }
 
 //======================== FUNCTION: check_all_ate ==========================
@@ -160,19 +160,19 @@ int	check_philo_death(t_data *data, int i)
 
 int	check_all_ate(t_data *data)
 {
-  uint64_t last_m;
-  int m_count;
-  int i;
+	uint64_t	last_m;
+	int			m_count;
+	int			i;
 
-  if(data->max_meals == -1)
-    return 0;
-  i = 0;
-  while(i < data->philo_count)
-  {
-    get_meal_data(&data->philos[i], &last_m, &m_count);
-    if (m_count < data->max_meals)
-      return 0;
-    i++;
-  }
-  return 1;
+	if (data->max_meals == -1)
+		return (0);
+	i = 0;
+	while (i < data->philo_count)
+	{
+		get_meal_data(&data->philos[i], &last_m, &m_count);
+		if (m_count < data->max_meals)
+			return (0);
+		i++;
+	}
+	return (1);
 }
