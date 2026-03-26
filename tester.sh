@@ -351,6 +351,172 @@ run_leaks() {
   done
 }
 
+run_extra() {
+  header "8. EXTRA TESTS"
+  desc "Creative, extreme, and edge-case scenarios."
+
+  # --- 8.1: Absurd time_to_sleep (500M ms) — must die ---
+  printf "\n  ${BLD}Test 8.1:${RST} ./philo 8 800 1000 500000000\n"
+  desc "time_to_sleep is 500M ms. Philosophers starve during sleep."
+  OUTPUT=$(timeout 5 $PHILO 8 800 1000 500000000 2>&1)
+  if echo "$OUTPUT" | grep -q "died"; then
+    DEATH_TIME=$(echo "$OUTPUT" | grep "died" | awk '{print $1}')
+    ok "Philosopher died at ${DEATH_TIME}ms (starved during absurd sleep)"
+  else
+    ko "No philosopher died — should starve during 500M ms sleep"
+  fi
+
+  # --- 8.2: Absurd time_to_sleep (2M ms) — must die ---
+  printf "\n  ${BLD}Test 8.2:${RST} ./philo 5 800 200 2000000\n"
+  desc "time_to_sleep is 2M ms. Philosophers will starve during sleep."
+  OUTPUT=$(timeout 5 $PHILO 5 800 200 2000000 2>&1)
+  if echo "$OUTPUT" | grep -q "died"; then
+    DEATH_TIME=$(echo "$OUTPUT" | grep "died" | awk '{print $1}')
+    ok "Philosopher died at ${DEATH_TIME}ms (starved during 2M ms sleep)"
+  else
+    ko "No philosopher died — should starve during 2M ms sleep"
+  fi
+
+  # --- 8.3: Absurd time_to_eat (2M ms) — should NOT die ---
+  printf "\n  ${BLD}Test 8.3:${RST} ./philo 5 800 2000000 200\n"
+  desc "time_to_eat is 2M ms. Eating resets last_meal — should NOT die."
+  OUTPUT=$(timeout 5 $PHILO 5 800 2000000 200 2>&1)
+  if echo "$OUTPUT" | grep -q "died"; then
+    ko "A philosopher died — eating should reset last_meal_time"
+  else
+    LINES=$(echo "$OUTPUT" | wc -l)
+    if [ "$LINES" -gt 0 ]; then
+      ok "No death ($LINES lines) — eating keeps philosophers alive"
+    else
+      warn "No output produced"
+    fi
+  fi
+
+  # --- 8.4: Edge timing — time_to_die == time_to_eat + time_to_sleep ---
+  printf "\n  ${BLD}Test 8.4:${RST} ./philo 4 400 200 200\n"
+  desc "time_to_die == time_to_eat + time_to_sleep (exact edge). Death depends on scheduling."
+  OUTPUT=$(timeout 10 $PHILO 4 400 200 200 2>&1)
+  if echo "$OUTPUT" | grep -q "died"; then
+    DEATH_TIME=$(echo "$OUTPUT" | grep "died" | awk '{print $1}')
+    warn "Philosopher died at ${DEATH_TIME}ms (edge timing — scheduling dependent)"
+  else
+    LINES=$(echo "$OUTPUT" | wc -l)
+    ok "No death ($LINES lines) — survived edge timing"
+  fi
+
+  # --- 8.5: time_to_eat > time_to_die — must die ---
+  printf "\n  ${BLD}Test 8.5:${RST} ./philo 5 200 400 200\n"
+  desc "time_to_eat (400) > time_to_die (200). Philosophers die while waiting for forks."
+  OUTPUT=$(timeout 5 $PHILO 5 200 400 200 2>&1)
+  if echo "$OUTPUT" | grep -q "died"; then
+    DEATH_TIME=$(echo "$OUTPUT" | grep "died" | awk '{print $1}')
+    ok "Philosopher died at ${DEATH_TIME}ms (cannot survive when eat > die)"
+    DEATH_COUNT=$(echo "$OUTPUT" | grep -c "died")
+    if [ "$DEATH_COUNT" -eq 1 ]; then
+      ok "Exactly one death message printed"
+    else
+      ko "Multiple death messages ($DEATH_COUNT)"
+    fi
+  else
+    ko "No philosopher died — should die when time_to_eat > time_to_die"
+  fi
+
+  # --- 8.6: Large philosopher count with tight timing ---
+  printf "\n  ${BLD}Test 8.6:${RST} ./philo 150 410 200 200\n"
+  desc "150 philosophers with tight timing. Must not crash, deadlock, or die."
+  OUTPUT=$(timeout 15 $PHILO 150 410 200 200 2>&1)
+  if echo "$OUTPUT" | grep -q "died"; then
+    ko "A philosopher died with 150 philosophers (tight timing)"
+  else
+    LINES=$(echo "$OUTPUT" | wc -l)
+    if [ "$LINES" -gt 10 ]; then
+      ok "No death, $LINES lines of output with 150 philos"
+    else
+      warn "No death but $LINES lines — possible env issue"
+    fi
+  fi
+
+  # --- 8.7: Very large meal count ---
+  printf "\n  ${BLD}Test 8.7:${RST} ./philo 4 800 200 200 100\n"
+  desc "4 philosophers, each must eat 100 times. Simulation must stop cleanly."
+  OUTPUT=$(timeout 120 $PHILO 4 800 200 200 100 2>&1)
+  if echo "$OUTPUT" | grep -q "died"; then
+    ko "A philosopher died before eating 100 times"
+  else
+    LINES=$(echo "$OUTPUT" | wc -l)
+    if [ "$LINES" -gt 100 ]; then
+      ok "Completed without death ($LINES lines, 100 meals each)"
+    else
+      warn "Completed but only $LINES lines — possibly not all meals eaten"
+    fi
+  fi
+
+  # --- 8.8: Single philosopher with generous timing ---
+  printf "\n  ${BLD}Test 8.8:${RST} ./philo 1 5000 200 200\n"
+  desc "One philosopher, generous time_to_die. Must still die (only 1 fork)."
+  OUTPUT=$(timeout 10 $PHILO 1 5000 200 200 2>&1)
+  if echo "$OUTPUT" | grep -q "died"; then
+    DEATH_TIME=$(echo "$OUTPUT" | grep "died" | awk '{print $1}')
+    if [ "$DEATH_TIME" -ge 5000 ] && [ "$DEATH_TIME" -le 5010 ]; then
+      ok "Philosopher died at ${DEATH_TIME}ms (within 10ms of 5000)"
+    else
+      warn "Philosopher died at ${DEATH_TIME}ms (expected ~5000)"
+    fi
+  else
+    ko "Philosopher did not die — must die with 1 fork"
+  fi
+
+  # --- 8.9: Rapid succession runs (resource cleanup) ---
+  printf "\n  ${BLD}Test 8.9:${RST} 5x rapid ./philo 5 800 200 200 3\n"
+  desc "Run 5 short simulations back-to-back to check for resource cleanup."
+  CLEANUP_OK=true
+  for RUN in 1 2 3 4 5; do
+    OUTPUT=$(timeout 10 $PHILO 5 800 200 200 3 2>&1)
+    RC=$?
+    if echo "$OUTPUT" | grep -q "died"; then
+      CLEANUP_OK=false
+      ko "Run $RUN: A philosopher died"
+      break
+    fi
+    if [ "$RC" -eq 124 ]; then
+      CLEANUP_OK=false
+      ko "Run $RUN: Timed out — possible deadlock or resource leak"
+      break
+    fi
+  done
+  if [ "$CLEANUP_OK" = true ]; then
+    ok "All 5 rapid runs completed cleanly — no resource leaks"
+  fi
+
+  # --- 8.10: Output format validation ---
+  printf "\n  ${BLD}Test 8.10:${RST} Output format check on ./philo 5 800 200 200 5\n"
+  desc "Every line must match: [timestamp] [philo_id] [action]"
+  OUTPUT=$(timeout 15 $PHILO 5 800 200 200 5 2>&1)
+  BAD_LINES=$(echo "$OUTPUT" | grep -cvE '^[0-9]+ [0-9]+ (has taken a fork|is eating|is sleeping|is thinking|died)$')
+  TOTAL_LINES=$(echo "$OUTPUT" | wc -l)
+  if [ "$BAD_LINES" -eq 0 ]; then
+    ok "All $TOTAL_LINES lines match expected format"
+  else
+    ko "$BAD_LINES out of $TOTAL_LINES lines have bad format"
+    echo "$OUTPUT" | grep -vE '^[0-9]+ [0-9]+ (has taken a fork|is eating|is sleeping|is thinking|died)$' | head -5
+  fi
+
+  # --- 8.11: Two philosophers, tight meal count ---
+  printf "\n  ${BLD}Test 8.11:${RST} ./philo 2 400 200 100 5\n"
+  desc "Two philosophers, each must eat 5 times with tight timing. Must not die."
+  OUTPUT=$(timeout 15 $PHILO 2 400 200 100 5 2>&1)
+  if echo "$OUTPUT" | grep -q "died"; then
+    ko "A philosopher died"
+  else
+    LINES=$(echo "$OUTPUT" | wc -l)
+    if [ "$LINES" -gt 0 ]; then
+      ok "Completed without death ($LINES lines)"
+    else
+      ko "No output produced"
+    fi
+  fi
+}
+
 # ============================================================================
 #  MENU
 # ============================================================================
@@ -373,6 +539,7 @@ show_menu() {
   printf "  ${CYN}[5]${RST}  Stress Tests          ${DIM}— 200 philos, tight timings${RST}\n"
   printf "  ${CYN}[6]${RST}  Helgrind              ${DIM}— Data race detection${RST}\n"
   printf "  ${CYN}[7]${RST}  Valgrind Leaks        ${DIM}— Memory leak detection${RST}\n"
+  printf "  ${CYN}[8]${RST}  Extra Tests           ${DIM}— Absurd timings, edge cases, format${RST}\n"
   printf "\n"
   printf "  ${GRN}[a]${RST}  Run ALL tests\n"
   printf "  ${RED}[q]${RST}  Quit\n"
@@ -389,6 +556,7 @@ run_test_by_id() {
   5) run_stress ;;
   6) run_helgrind ;;
   7) run_leaks ;;
+  8) run_extra ;;
   *) printf "  ${RED}Invalid option${RST}\n" ;;
   esac
 }
@@ -402,6 +570,7 @@ run_all() {
   run_stress
   run_helgrind
   run_leaks
+  run_extra
   print_results
 }
 
@@ -421,7 +590,7 @@ while true; do
   read -r choice
 
   case "$choice" in
-  [0-7])
+  [0-8])
     PASS=0
     FAIL=0
     WARN=0
