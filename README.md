@@ -165,7 +165,6 @@ make fclean   # Remove object files and the binary
 # Stress test: 200 philosophers
 ./philo 200 800 200 200
 ```
-```
 
 ---
 
