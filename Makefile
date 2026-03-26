@@ -6,6 +6,7 @@ INC     = -I includes
 
 SRC_DIR = src
 UTL_DIR = utils
+OBJ_DIR = obj
 
 SRC     = $(SRC_DIR)/main.c \
           $(SRC_DIR)/parse.c \
@@ -18,7 +19,7 @@ SRC     = $(SRC_DIR)/main.c \
 UTL     = $(UTL_DIR)/error_utils.c \
           $(UTL_DIR)/utils.c
 
-OBJ     = $(SRC:.c=.o) $(UTL:.c=.o)
+OBJ     = $(SRC:%.c=$(OBJ_DIR)/%.o) $(UTL:%.c=$(OBJ_DIR)/%.o)
 DEP     = $(OBJ:.o=.d)
 
 all: $(NAME)
@@ -28,21 +29,16 @@ all: $(NAME)
 $(NAME): $(OBJ)
 	$(CC) $(CFLAGS) $(OBJ) -o $(NAME)
 
-%.o: %.c
+$(OBJ_DIR)/%.o: %.c
+	@mkdir -p $(dir $@)
 	$(CC) $(CFLAGS) $(INC) -c $< -o $@
 
 clean:
-	rm -f $(OBJ) $(DEP)
+	rm -rf $(OBJ_DIR)
 
 fclean: clean
 	rm -f $(NAME)
 
 re: fclean all
-
-asan: CFLAGS += -fsanitize=address,undefined
-asan: re
-
-tsan: CFLAGS += -fsanitize=thread
-tsan: re
 
 .PHONY: all clean fclean re asan tsan

@@ -29,3 +29,16 @@ int	ft_error(char *str)
 	write(2, "\n", 1);
 	return (0);
 }
+
+void	destroy_partial(t_data *data, int count)
+{
+	int	i;
+
+	i = 0;
+	while (i < count)
+	{
+		pthread_mutex_destroy(&data->forks[i]);
+		pthread_mutex_destroy(&data->philos[i].meal_mutex);
+		i++;
+	}
+}

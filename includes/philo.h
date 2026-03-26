@@ -108,6 +108,7 @@ typedef enum e_err
 /* Error utils function */
 int						ft_strlen(char *str);
 int						ft_error(char *str);
+void					destroy_partial(t_data *data, int count);
 
 /* Main function */
 int						main(int ac, char **av);

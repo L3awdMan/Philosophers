@@ -32,8 +32,6 @@ int	main(int ac, char **av)
 		return (1);
 	if (!init_data(&data))
 		return (1);
-	if (!init_philos(&data))
-		return (destroy_mutexes(&data), 1);
 	if (!start_simulation(&data))
 		return (destroy_mutexes(&data), 1);
 	join_threads(&data);
@@ -68,7 +66,13 @@ int	start_simulation(t_data *data)
 	{
 		if (pthread_create(&data->philos[i].thread, NULL, philo_routine,
 				&data->philos[i]) != 0)
+		{
+			set_sim_stop(data);
+			while (--i >= 0)
+				pthread_join(data->philos[i].thread, NULL);
+			pthread_join(data->monitor_thread, NULL);
 			return (0);
+		}
 		i++;
 	}
 	wait_for_start(data);

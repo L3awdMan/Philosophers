@@ -100,15 +100,21 @@ int	init_mutexes(t_data *data)
 	while (i < data->philo_count)
 	{
 		if (pthread_mutex_init(&data->forks[i], NULL) != 0)
-			return (0);
+			return (destroy_partial(data, i), 0);
 		if (pthread_mutex_init(&data->philos[i].meal_mutex, NULL) != 0)
-			return (0);
+		{
+			pthread_mutex_destroy(&data->forks[i]);
+			return (destroy_partial(data, i), 0);
+		}
 		i++;
 	}
 	if (pthread_mutex_init(&data->print_mutex, NULL) != 0)
-		return (0);
+		return (destroy_partial(data, data->philo_count), 0);
 	if (pthread_mutex_init(&data->state_mutex, NULL) != 0)
-		return (0);
+	{
+		pthread_mutex_destroy(&data->print_mutex);
+		return (destroy_partial(data, data->philo_count), 0);
+	}
 	return (1);
 }
 

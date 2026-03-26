@@ -154,7 +154,7 @@ void	philo_sleep(t_philo *philo)
 
 void	think(t_philo *philo)
 {
-	uint64_t	since_meal;
+	int			since_meal;
 	uint64_t	think_time;
 	uint64_t	lm;
 	int			mc;

@@ -79,7 +79,7 @@ uint64_t	time_since(uint64_t start)
 //    uint64_t remaining — ms left to sleep
 //
 // ALGORITHM:
-//       - remaining > 10ms → usleep(remaining * 500) [coarse]
+//       - remaining > 10ms → usleep(remaining * 100) [coarse]
 //       - remaining > 1ms  → usleep(500)             [fine]
 //       - remaining <= 1ms → usleep(100)             [ultra-fine]
 // TODO : b.u remaining time
@@ -88,7 +88,7 @@ void	precise_wait(uint64_t ms, t_data *data)
 {
 	uint64_t	start;
 	uint64_t	elapsed;
-	uint64_t	remaining;
+	// uint64_t	remaining;
 
 	start = get_time_ms();
 	while (!get_sim_stop(data))
@@ -96,12 +96,7 @@ void	precise_wait(uint64_t ms, t_data *data)
 		elapsed = time_since(start);
 		if (elapsed >= ms)
 			break ;
-		remaining = ms - elapsed;
-		if (remaining > 10)
-			usleep(remaining * 100);
-		else if (remaining > 1)
-			usleep(500);
-		else
-			usleep(100);
+		// remaining = ms - elapsed;
+		usleep(100);
 	}
 }
