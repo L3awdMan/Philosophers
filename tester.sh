@@ -156,7 +156,7 @@ run_mandatory() {
 
   printf "\n  ${BLD}Test 2.6:${RST} ./philo 2 800 200 200\n"
   desc "Two philosophers. Death timing must be < 10ms precision."
-  OUTPUT=$(timeout 10 $PHILO 2 800 200 200 2>&1)
+  OUTPUT=$(timeout 10 stdbuf -oL $PHILO 2 800 200 200 2>&1)
   if echo "$OUTPUT" | grep -q "died"; then
     ko "A philosopher died unexpectedly"
   else
@@ -377,19 +377,21 @@ run_extra() {
     ko "No philosopher died — should starve during 2M ms sleep"
   fi
 
-  # --- 8.3: Absurd time_to_eat (2M ms) — should NOT die ---
+  # --- 8.3: Absurd time_to_eat (2M ms) — must die ---
   printf "\n  ${BLD}Test 8.3:${RST} ./philo 5 800 2000000 200\n"
-  desc "time_to_eat is 2M ms. Eating resets last_meal — should NOT die."
+  desc "time_to_eat is 2M ms. Forks held too long — waiting philosophers starve."
   OUTPUT=$(timeout 5 $PHILO 5 800 2000000 200 2>&1)
   if echo "$OUTPUT" | grep -q "died"; then
-    ko "A philosopher died — eating should reset last_meal_time"
-  else
-    LINES=$(echo "$OUTPUT" | wc -l)
-    if [ "$LINES" -gt 0 ]; then
-      ok "No death ($LINES lines) — eating keeps philosophers alive"
+    DEATH_TIME=$(echo "$OUTPUT" | grep "died" | awk '{print $1}')
+    ok "Philosopher died at ${DEATH_TIME}ms (starved waiting for forks held 2M ms)"
+    DEATH_COUNT=$(echo "$OUTPUT" | grep -c "died")
+    if [ "$DEATH_COUNT" -eq 1 ]; then
+      ok "Exactly one death message printed"
     else
-      warn "No output produced"
+      ko "Multiple death messages ($DEATH_COUNT)"
     fi
+  else
+    ko "No philosopher died — should starve while forks are held for 2M ms"
   fi
 
   # --- 8.4: Edge timing — time_to_die == time_to_eat + time_to_sleep ---
