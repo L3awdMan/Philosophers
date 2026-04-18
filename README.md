@@ -46,15 +46,4 @@ The monitor thread runs concurrently:
 
 ---
 
-## Resources
-
-### References
-
-- [POSIX Threads Programming](https://computing.llnl.gov/tutorials/pthreads/) -- Lawrence Livermore National Laboratory guide to pthreads, covering thread creation, mutexes, condition variables, and synchronization patterns.
-- [Dining Philosophers Problem -- Wikipedia](https://en.wikipedia.org/wiki/Dining_philosophers_problem) -- Overview of the problem, its history, and classical solutions including resource hierarchy and arbitrator approaches.
-- [pthread_create(3)](https://man7.org/linux/man-pages/man3/pthread_create.3.html), [pthread_mutex_lock(3)](https://man7.org/linux/man-pages/man3/pthread_mutex_lock.3p.html) -- Linux man pages for the core threading primitives used in this project.
-- [Dijkstra, E. W. (1971). "Hierarchical Ordering of Sequential Processes"](https://www.cs.utexas.edu/users/EWD/ewd03xx/EWD310.PDF) -- The original resource hierarchy solution that inspired the fork-ordering strategy used here.
-
----
-
 > *"I think, therefore I eat."* -- A well-fed philosopher, probably.
